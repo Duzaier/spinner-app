@@ -27,7 +27,7 @@ export default function RiggedSpinnerApp() {
     // -------------
     const [namesInput, setNamesInput] = useState(defaultNames.join("\n"));
     const [names, setNames] = useState(defaultNames);
-    const [riggedSequenceInput, setRiggedSequenceInput] = useState("🍒 Cherry\n🍎 Apple");
+    const [riggedSequenceInput] = useState("");
     const riggedSequence = riggedSequenceInput
         .split(/\r?\n/)
         .map((s) => s.trim())
@@ -44,7 +44,7 @@ export default function RiggedSpinnerApp() {
     const [spinCount, setSpinCount] = useState(0);
 
     const total = names.length || 1;
-    const fractions = names.map(() => 1 / total);
+    // const fractions = names.map(() => 1 / total);
 
     // Prevent body scroll while spinning
     useEffect(() => {
