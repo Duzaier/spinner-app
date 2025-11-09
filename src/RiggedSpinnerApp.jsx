@@ -43,11 +43,10 @@ export default function RiggedSpinnerApp() {
     const [showModal, setShowModal] = useState(false);
     const [spinCount, setSpinCount] = useState(0);
 
-    // Giữ lại để không lỗi eslint mà vẫn hợp lệ
-    // (nếu sau này cần dùng thì không phải viết lại)
+    // eslint-disable-next-line no-unused-vars
     const total = names.length || 1;
     useEffect(() => {
-        void total; // tránh eslint cảnh báo unused
+        void total;
     }, [total]);
 
 
