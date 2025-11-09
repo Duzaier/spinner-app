@@ -15,7 +15,7 @@ import confetti from "canvas-confetti";
 
 export default function RiggedSpinnerApp() {
     // --- CONFIG ---
-    const wheelSize = 720;
+    const [wheelSize, setWheelSize] = useState(720); // dynamic size
     const defaultNames = [
         "🍎 Apple",
         "🍌 Banana",
@@ -25,6 +25,7 @@ export default function RiggedSpinnerApp() {
         "🥝 Kiwi",
     ];
     // -------------
+
     const [namesInput, setNamesInput] = useState(defaultNames.join("\n"));
     const [names, setNames] = useState(defaultNames);
     const [riggedSequenceInput] = useState("");
@@ -49,6 +50,19 @@ export default function RiggedSpinnerApp() {
         void total;
     }, [total]);
 
+    // 🧩 Responsive wheel size
+    useEffect(() => {
+        const updateSize = () => {
+            const width = window.innerWidth;
+            if (width < 500) setWheelSize(260);
+            else if (width < 768) setWheelSize(360);
+            else if (width < 1024) setWheelSize(480);
+            else setWheelSize(720);
+        };
+        updateSize();
+        window.addEventListener("resize", updateSize);
+        return () => window.removeEventListener("resize", updateSize);
+    }, []);
 
     // Prevent body scroll while spinning
     useEffect(() => {
@@ -56,7 +70,7 @@ export default function RiggedSpinnerApp() {
         return () => (document.body.style.overflow = "");
     }, [spinning]);
 
-    // Draw wheel (canvas)
+    // Draw wheel
     useEffect(() => {
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -75,19 +89,16 @@ export default function RiggedSpinnerApp() {
             const start = i * arc;
             const end = start + arc;
 
-            // Segment background
             ctx.beginPath();
             ctx.moveTo(r, r);
             ctx.arc(r, r, r, start, end);
             ctx.closePath();
             ctx.fillStyle = `hsl(${hueFor(i)}, 70%, 80%)`;
             ctx.fill();
-
             ctx.strokeStyle = "rgba(255,255,255,0.3)";
             ctx.lineWidth = 0.8;
             ctx.stroke();
 
-            // Label
             ctx.save();
             ctx.translate(r, r);
             ctx.rotate(start + arc / 2);
@@ -99,7 +110,6 @@ export default function RiggedSpinnerApp() {
             ctx.restore();
         }
 
-        // Inner circle (hub)
         ctx.beginPath();
         ctx.arc(r, r, Math.max(40, size * 0.06), 0, Math.PI * 2);
         ctx.fillStyle = "#fff";
@@ -114,7 +124,6 @@ export default function RiggedSpinnerApp() {
         ctx.fillText("GO", r, r);
     }, [names, wheelSize]);
 
-    // Rigged/random picker
     function pickIndexByRigOrRandom() {
         if (spinCount < riggedSequence.length) {
             const want = riggedSequence[spinCount];
@@ -136,9 +145,6 @@ export default function RiggedSpinnerApp() {
         spinToIndex(chosenIndex);
     }
 
-    // -----------------------
-    // UPDATED spinToIndex
-    // -----------------------
     function spinToIndex(index) {
         if (spinning || names.length === 0) return;
         setSpinning(true);
@@ -147,7 +153,7 @@ export default function RiggedSpinnerApp() {
 
         const sliceAngle = 360 / names.length;
         const centerDeg = index * sliceAngle + sliceAngle / 2;
-        const extraSpins = 4 + Math.floor(Math.random() * 2); // 4–5 vòng
+        const extraSpins = 4 + Math.floor(Math.random() * 2);
         let finalDeg = 360 * extraSpins + (270 - centerDeg);
         finalDeg = finalDeg + (Math.floor(Math.abs(finalDeg) / 360) + 1) * 360;
 
@@ -157,7 +163,6 @@ export default function RiggedSpinnerApp() {
             return;
         }
 
-        // 🕒 Tăng thời gian quay lên 6s + easing mượt
         el.style.transition = "transform 6s cubic-bezier(.08,.77,.38,1)";
         el.style.transform = `rotate(${finalDeg}deg)`;
 
@@ -167,12 +172,8 @@ export default function RiggedSpinnerApp() {
             const normalized = finalDeg % 360;
             el.style.transform = `rotate(${normalized}deg)`;
             finishSpinFromNormalized(normalized);
-        }, 6100); // tăng timeout tương ứng
+        }, 6100);
     }
-
-    // -----------------------
-    // End spinToIndex
-    // -----------------------
 
     function finishSpinFromNormalized(normalizedAngle) {
         const sliceAngle = 360 / names.length;
@@ -181,7 +182,6 @@ export default function RiggedSpinnerApp() {
         const picked = names[Math.max(0, Math.min(index, names.length - 1))];
 
         setResult(picked);
-
         try {
             confetti({ particleCount: 120, spread: 70, origin: { y: 0.6 } });
         } catch (e) { }
@@ -214,10 +214,10 @@ export default function RiggedSpinnerApp() {
     }, []);
 
     return (
-        <Container fluid className="py-4">
-            <Row className="g-4 align-items-start">
+        <Container fluid className="py-4 px-3">
+            <Row className="g-4 align-items-start flex-column flex-md-row">
                 {/* LEFT PANEL */}
-                <Col md={4}>
+                <Col xs={12} md={4}>
                     <Card
                         className="p-3"
                         style={{
@@ -227,10 +227,12 @@ export default function RiggedSpinnerApp() {
                             boxShadow: "0 8px 30px rgba(124,58,237,0.18)",
                         }}
                     >
-                        <h5 className="mb-2 fw-bold">🎯 Danh sách quay</h5>
+                        <h5 className="mb-2 fw-bold text-center text-md-start">
+                            🎯 Danh sách quay
+                        </h5>
                         <Form.Control
                             as="textarea"
-                            rows={8}
+                            rows={6}
                             value={namesInput}
                             onChange={(e) => setNamesInput(e.target.value)}
                             style={{
@@ -238,14 +240,15 @@ export default function RiggedSpinnerApp() {
                                 background: "rgba(255,255,255,0.08)",
                                 color: "white",
                                 border: "1px solid rgba(255,255,255,0.08)",
+                                fontSize: "0.9rem",
                             }}
                         />
-                        <div className="d-flex gap-2 mt-3">
+                        <div className="d-flex gap-2 mt-3 flex-wrap">
                             <Button className="btn btn-light flex-grow-1" onClick={handleApplyNames}>
                                 Áp dụng
                             </Button>
                             <Button
-                                className="btn btn-outline-light"
+                                className="btn btn-outline-light flex-grow-1"
                                 onClick={() => {
                                     setNamesInput(defaultNames.join("\n"));
                                     setNames(defaultNames);
@@ -258,13 +261,17 @@ export default function RiggedSpinnerApp() {
                 </Col>
 
                 {/* RIGHT WHEEL */}
-                <Col md={8}>
-                    <Card className="p-3" style={{ border: "none", boxShadow: "0 10px 30px rgba(2,6,23,0.06)" }}>
-                        <div className="d-flex justify-content-between align-items-center">
-                            <h4>🎡 Spinner</h4>
-                            <div className="d-flex gap-2">
+                <Col xs={12} md={8}>
+                    <Card
+                        className="p-3"
+                        style={{ border: "none", boxShadow: "0 10px 30px rgba(2,6,23,0.06)" }}
+                    >
+                        <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <h4 className="m-0">🎡 Spinner</h4>
+                            <div className="d-flex gap-2 flex-wrap justify-content-center">
                                 <Button
                                     variant="outline-secondary"
+                                    size="sm"
                                     onClick={() => {
                                         if (wheelRef.current) {
                                             wheelRef.current.style.transition = "none";
@@ -277,7 +284,11 @@ export default function RiggedSpinnerApp() {
                                 >
                                     Reset
                                 </Button>
-                                <Button onClick={spin} disabled={spinning || names.length === 0}>
+                                <Button
+                                    size="sm"
+                                    onClick={spin}
+                                    disabled={spinning || names.length === 0}
+                                >
                                     {spinning ? "Đang quay..." : "Quay ngay"}
                                 </Button>
                             </div>
@@ -304,6 +315,9 @@ export default function RiggedSpinnerApp() {
                                         borderRadius: "50%",
                                         boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
                                         background: "#fff",
+                                        width: "100%",
+                                        height: "auto",
+                                        maxWidth: "100%",
                                     }}
                                 />
                             </div>
@@ -323,9 +337,9 @@ export default function RiggedSpinnerApp() {
                                     style={{
                                         width: 0,
                                         height: 0,
-                                        borderLeft: "16px solid transparent",
-                                        borderRight: "16px solid transparent",
-                                        borderBottom: "24px solid #222",
+                                        borderLeft: "12px solid transparent",
+                                        borderRight: "12px solid transparent",
+                                        borderBottom: "18px solid #222",
                                     }}
                                 />
                             </div>
@@ -338,7 +352,7 @@ export default function RiggedSpinnerApp() {
                                     animate={{ scale: 1, opacity: 1 }}
                                     transition={{ duration: 0.6 }}
                                 >
-                                    <strong style={{ fontSize: 20 }}>Kết quả:</strong>
+                                    <strong style={{ fontSize: 18 }}>Kết quả:</strong>
                                     <span style={{ fontWeight: 800, marginLeft: 8 }}>{result}</span>
                                 </motion.div>
                             </div>
@@ -353,10 +367,14 @@ export default function RiggedSpinnerApp() {
                     <Modal.Title>🎉 Chúc mừng!</Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="text-center">
-                    <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ duration: 0.25 }}>
-                        <h2 style={{ fontSize: 26, marginBottom: 8 }}>{result}</h2>
+                    <motion.div
+                        initial={{ scale: 0.9 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 0.25 }}
+                    >
+                        <h2 style={{ fontSize: 24, marginBottom: 8 }}>{result}</h2>
                         <p>Bạn có muốn giữ lại hoặc loại bỏ tên này khỏi danh sách?</p>
-                        <div className="d-flex gap-2 justify-content-center">
+                        <div className="d-flex gap-2 justify-content-center flex-wrap">
                             <Button variant="success" onClick={() => setShowModal(false)}>
                                 Giữ lại
                             </Button>
