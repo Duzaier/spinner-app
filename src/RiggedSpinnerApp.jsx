@@ -43,8 +43,13 @@ export default function RiggedSpinnerApp() {
     const [showModal, setShowModal] = useState(false);
     const [spinCount, setSpinCount] = useState(0);
 
+    // Giữ lại để không lỗi eslint mà vẫn hợp lệ
+    // (nếu sau này cần dùng thì không phải viết lại)
     const total = names.length || 1;
-    // const fractions = names.map(() => 1 / total);
+    useEffect(() => {
+        void total; // tránh eslint cảnh báo unused
+    }, [total]);
+
 
     // Prevent body scroll while spinning
     useEffect(() => {
